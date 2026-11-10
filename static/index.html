@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClinGastroVQA — Endoscopy Analysis</title>
+<style>
+  :root{
+    --accent:#C1592B; --accent-soft:#FAEEE9; --ink:#141414; --muted:#6b6b6b;
+    --line:#e2e2e2; --bg:#f6f5f3; --card:#fff; --ok:#2CA02C; --warn:#C44E52;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.5 "Helvetica Neue",Arial,system-ui,sans-serif}
+  header{background:var(--card);border-bottom:2.5px solid var(--accent);
+         padding:14px 22px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:5}
+  .mark{background:var(--accent);color:#fff;font-weight:700;padding:5px 11px;
+        border-radius:3px;letter-spacing:.3px;font-size:15px}
+  .brandsub{font-size:11px;color:var(--muted)}
+  header .spacer{flex:1}
+  .status{font-size:12px;color:var(--muted)}
+  .status b{color:var(--ink)}
+  .status .bad{color:var(--warn);font-weight:700}
+  main{max-width:1180px;margin:0 auto;padding:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;
+        padding:18px;margin-bottom:18px}
+  h2{font-size:16px;margin:0 0 12px;color:var(--accent)}
+  h3{font-size:13px;margin:16px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+
+  /* upload */
+  #drop{border:2px dashed #cfcfcf;border-radius:8px;padding:34px;text-align:center;
+        cursor:pointer;transition:.15s;background:#fcfcfc}
+  #drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  #drop p{margin:6px 0;color:var(--muted)}
+  #preview{max-height:260px;border-radius:6px;display:none;margin:14px auto 0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  button{font:inherit;font-weight:600;border:0;border-radius:6px;padding:10px 18px;cursor:pointer}
+  .primary{background:var(--accent);color:#fff}
+  .primary:disabled{background:#d4c3bc;cursor:not-allowed}
+  .ghost{background:#efefef;color:var(--ink)}
+  a.dl{display:inline-block;text-decoration:none;background:var(--accent);color:#fff;
+       font-weight:600;border-radius:6px;padding:10px 18px}
+  a.dl.alt{background:#efefef;color:var(--ink)}
+  .err{color:var(--warn);font-size:13px}
+
+  /* progress */
+  #busy{display:none;align-items:center;gap:10px;margin-top:14px;color:var(--muted);font-size:14px}
+  .spin{width:16px;height:16px;border:2.5px solid #ddd;border-top-color:var(--accent);
+        border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* dashboard */
+  #dash{display:none}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .kpi{background:var(--accent-soft);border:1px solid #eddbd3;border-radius:6px;padding:12px}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .kpi .v{font-size:20px;font-weight:700;margin-top:3px}
+  .kpi .s{font-size:11px;color:var(--muted)}
+  .bars{margin-top:4px}
+  .bar{display:grid;grid-template-columns:150px 1fr 56px;align-items:center;gap:10px;margin:5px 0}
+  .bar .n{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track{background:#eee;border-radius:4px;height:16px;overflow:hidden}
+  .fill{height:100%;background:#4C72B0}
+  .fill.top{background:var(--ok)}
+  .bar .p{font-size:12px;color:var(--muted);text-align:right}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  figure{margin:0}
+  figure img{width:100%;border:1px solid var(--line);border-radius:6px;display:block;background:#eee}
+  figcaption{font-size:12px;color:var(--muted);text-align:center;padding-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  th{background:#f5f5f5}
+  tr.grp td{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  .flag{color:var(--warn);font-weight:700}
+  .note{font-size:12px;color:var(--muted);margin-top:6px}
+  .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);
+              padding-top:10px;margin-top:14px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:860px){.two{grid-template-columns:1fr}.bar{grid-template-columns:110px 1fr 48px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="mark">ClinGastroVQA™</div>
+    <div class="brandsub">Endoscopy Analysis Suite</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="status" id="status">checking service…</div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1 · Input frame</h2>
+    <div id="drop">
+      <p><b>Drop an endoscopy frame here</b> or click to browse</p>
+      <p>JPG, PNG, BMP or TIFF · up to 12 MB</p>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
+    <img id="preview" alt="selected frame">
+    <div class="row">
+      <button class="primary" id="go" disabled>Generate Report</button>
+      <button class="ghost" id="reset">Clear</button>
+      <span class="err" id="err"></span>
+    </div>
+    <div id="busy"><span class="spin"></span><span id="busytext">Running the pipeline…</span></div>
+  </section>
+
+  <div id="dash">
+    <section class="card">
+      <h2>2 · Result</h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="two" style="margin-top:18px">
+        <div>
+          <h3>Stage 1 — classification</h3>
+          <div class="bars" id="bars"></div>
+        </div>
+        <div>
+          <h3>Captured evidence</h3>
+          <div class="grid" id="figs"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3 · Structured findings</h2>
+      <div class="two">
+        <table id="summary"></table>
+        <div>
+          <figure><img id="vqafig" alt="VQA confidence"><figcaption>Stage 2 — answer confidence</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4 · Visual question answering</h2>
+      <table id="vqa"></table>
+      <p class="note">Each answer is drawn from the legal answer set the dataset defines for that
+         question. <b>*</b> marks an answer that unrestricted decoding would have got wrong;
+         <span class="flag">!</span> marks a question the training metadata never pairs with this class —
+         treat those as unvalidated.</p>
+    </section>
+
+    <section class="card">
+      <h2>5 · Download</h2>
+      <p class="note" id="stamp"></p>
+      <div class="row">
+        <a class="dl" id="dlpdf" download>Download PDF</a>
+        <a class="dl alt" id="dlhtml" download>Download HTML</a>
+        <a class="dl alt" id="dljson" download>Download JSON</a>
+      </div>
+      <p class="disclaimer" id="disc"></p>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let chosen = null;
+
+fetch("/api/health").then(r => r.json()).then(h => {
+  const loaded = h.stages_loaded || [];
+  const failed = Object.keys(h.stages_failed || {});
+  const st = h.self_test || {};
+  let msg;
+  if (h.mode === "demo") {
+    msg = `<b>DEMO MODE</b> — synthetic output, no checkpoints loaded`;
+  } else {
+    msg = `<b>${loaded.length}</b> stage${loaded.length === 1 ? "" : "s"} loaded · ${h.device}` +
+          ` · answers ${h.answer_vocab_size || "?"}`;
+    if (failed.length) msg += ` · <span class="bad">${failed.length} failed: ${failed.join(", ")}</span>`;
+    if (st.warning) msg += ` · <span class="bad">${st.warning}</span>`;
+  }
+  $("#status").innerHTML = msg;
+}).catch(() => $("#status").textContent = "service unreachable");
+
+const drop = $("#drop"), fileInput = $("#file");
+drop.onclick = () => fileInput.click();
+["dragenter", "dragover"].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.add("over");
+}));
+["dragleave", "drop"].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.remove("over");
+}));
+drop.addEventListener("drop", ev => pick(ev.dataTransfer.files[0]));
+fileInput.onchange = () => pick(fileInput.files[0]);
+
+function pick(f) {
+  if (!f) return;
+  chosen = f;
+  $("#err").textContent = "";
+  const img = $("#preview");
+  img.src = URL.createObjectURL(f);
+  img.style.display = "block";
+  $("#go").disabled = false;
+}
+
+$("#reset").onclick = () => {
+  chosen = null; fileInput.value = "";
+  $("#preview").style.display = "none";
+  $("#go").disabled = true; $("#dash").style.display = "none"; $("#err").textContent = "";
+};
+
+$("#go").onclick = async () => {
+  if (!chosen) return;
+  $("#go").disabled = true; $("#busy").style.display = "flex"; $("#err").textContent = "";
+  const fd = new FormData(); fd.append("file", chosen);
+  try {
+    const r = await fetch("/api/analyze", { method: "POST", body: fd });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.detail || "analysis failed");
+    render(body);
+  } catch (e) {
+    $("#err").textContent = e.message;
+  } finally {
+    $("#busy").style.display = "none"; $("#go").disabled = false;
+  }
+};
+
+function render(d) {
+  const c = d.classification, h = d.headline;
+  $("#kpis").innerHTML = [
+    ["Predicted class", c.predicted, (100 * c.confidence).toFixed(1) + "% confidence"],
+    ["Finding present", h.finding, "basis: " + h.finding_basis],
+    ["Detector boxes", h.boxes, "YOLOv8s"],
+    ["Lesion burden", h.burden_pct == null ? "n/a" : h.burden_pct.toFixed(2) + "%", h.size_bucket || "of visible mucosa"],
+  ].map(([l, v, s]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+
+  $("#bars").innerHTML = c.probabilities.map((p, i) => `
+    <div class="bar"><div class="n" title="${p.label}">${p.label}</div>
+      <div class="track"><div class="fill ${i === 0 ? "top" : ""}" style="width:${(100 * p.value).toFixed(1)}%"></div></div>
+      <div class="p">${(100 * p.value).toFixed(1)}%</div></div>`).join("");
+
+  const caps = { input: "Acquired frame", gradcam: "Grad-CAM attribution",
+                 detection: "Detector output", segmentation: "Segmentation overlay" };
+  $("#figs").innerHTML = Object.entries(caps)
+    .filter(([k]) => d.figures[k])
+    .map(([k, cap]) => `<figure><img src="${d.figures[k]}" alt="${cap}"><figcaption>${cap}</figcaption></figure>`).join("");
+  if (d.figures.vqa_confidence) $("#vqafig").src = d.figures.vqa_confidence;
+
+  $("#summary").innerHTML = "<tr><th>Field</th><th>Value</th></tr>" +
+    d.summary.map(r => `<tr><td>${r.field}</td><td><b>${r.value}</b></td></tr>`).join("");
+
+  let rows = "<tr><th>Question</th><th>Answer</th><th>Conf.</th><th>Answer space</th></tr>";
+  for (const g of d.vqa_groups) {
+    const sub = d.vqa.filter(v => v.group === g);
+    if (!sub.length) continue;
+    rows += `<tr class="grp"><td colspan="4">${g}</td></tr>`;
+    for (const v of sub) {
+      const warn = v.trained_on_this_class === false ? ' <span class="flag">!</span>' : "";
+      const star = v.restriction_changed_answer ? " *" : "";
+      rows += `<tr><td>${v.question}${warn}</td><td><b>${v.answer}</b>${star}</td>
+               <td>${(100 * v.confidence).toFixed(0)}%</td><td>${v.legal_answers == null ? "—" : v.legal_answers}</td></tr>`;
+    }
+  }
+  $("#vqa").innerHTML = rows;
+
+  $("#stamp").innerHTML = `Report generated <b>${d.generated_at_display}</b> · reported by ${d.reported_by}` +
+    (d.report.engine ? ` · PDF engine ${d.report.engine}` : "");
+  const stem = d.report.download_stem;
+  const pdf = $("#dlpdf");
+  if (d.report.pdf) { pdf.href = d.report.pdf; pdf.download = stem + ".pdf"; pdf.style.display = "inline-block"; }
+  else { pdf.style.display = "none"; }
+  $("#dlhtml").href = d.report.html; $("#dlhtml").download = stem + ".html";
+  $("#dljson").href = d.report.json; $("#dljson").download = stem + ".json";
+  $("#disc").textContent = d.disclaimer;
+
+  $("#dash").style.display = "block";
+  $("#dash").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
