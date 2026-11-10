@@ -1,0 +1,32 @@
+[
+  {
+    "name": "answer_vocab.json",
+    "bytes": 22256,
+    "sha256": "f1a603a3f3e3918f75f41fa3ea9ee550bd946e78669492045c92f54f9426fccd"
+  },
+  {
+    "name": "best.pt",
+    "bytes": 22516024,
+    "sha256": "a0108727510e58cf16f0be6a5f0f5d8a5dd90928b311dd26f1da4d70880f9efd"
+  },
+  {
+    "name": "best_model.pth",
+    "bytes": 111741240,
+    "sha256": "7435ce0b3275e76b91e77d87dd60c3426510a6ee5c673a9d93e565a0a2fcd216"
+  },
+  {
+    "name": "best_seg.pth",
+    "bytes": 42119043,
+    "sha256": "b652c4ae9c19bbf31df77b9b8365c879e0bf0bac6d304f9cdb72b9bec147eb47"
+  },
+  {
+    "name": "best_vqa.pth",
+    "bytes": 386167906,
+    "sha256": "87856d037b89d4003c347598088252ec624e077bdf0dae8f39c9cfc95bfdb5a2"
+  },
+  {
+    "name": "conditioned.pth",
+    "bytes": 107643497,
+    "sha256": "19605b63ce5bb1bfab7af104feaafc5fb87f8886677a17c04a228aaeb74a8621"
+  }
+]

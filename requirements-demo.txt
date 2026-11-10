@@ -1,0 +1,9 @@
+fastapi==0.162.2
+uvicorn==0.54.0
+python-multipart==0.0.33
+reportlab>=4,<5
+opencv-python-headless==5.0.0.93
+numpy>=2,<3
+pandas>=2.2,<4
+matplotlib==3.11.2
+httpx==0.28.1

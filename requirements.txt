@@ -1,0 +1,21 @@
+# service
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+
+# reporting
+reportlab>=4.0
+# optional: pixel-identical PDF from the same HTML (needs pango/cairo system libs)
+# weasyprint>=62
+
+# pipeline
+torch>=2.0
+timm>=0.9
+transformers>=4.40
+segmentation-models-pytorch>=0.3
+ultralytics>=8.2
+albumentations>=1.4
+opencv-python-headless>=4.9
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.7
