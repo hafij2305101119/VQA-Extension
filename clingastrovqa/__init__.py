@@ -1,0 +1,1 @@
+"""ClinGastroVQA report-generation application."""
